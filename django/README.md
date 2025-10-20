@@ -131,7 +131,7 @@
 
 ### 3.1. 교육 과정 목록 조회 및 생성
 - **Endpoint:** `GET, POST /api/courses/courses/`
-- **설명:** `GET`으로 회사의 모든 교육 과정을 조회하고, `POST`로 새 과정을 생성합니다.
+- **설명:** `GET`으로 회사의 모든 교육 과정을 조회하고, `POST`로 새 과정을 생성합니다. **과정 생성 시, 해당 과정의 제목과 동일한 이름으로 AI 평가를 위한 `MotionType`이 자동으로 함께 생성됩니다.**
 - **인증:** JWT 인증 필요
 - **`POST` 요청 본문 (Request Body):**
   ```json
@@ -213,6 +213,28 @@
 - **설명:** 특정 `id`를 가진 수강 신청 정보를 조회, 수정, 삭제합니다.
 - **인증:** JWT 인증 필요
 
+### 4.3. 과정별 사용자 평가 기록 조회
+- **Endpoint:** `GET /api/ai/recordings/user/<str:emp_no>/course/<int:course_id>/
+- **설명:** 특정 사용자(`emp_no`)의 특정 교육 과정(`course_id`)에 대한 가장 최근의 AI 평가 기록을 조회합니다. 프론트엔드 수강생 상세 모달에서 사용됩니다.
+- **인증:** JWT 인증 필요
+- **URL Parameters:**
+  - `emp_no` (string, required): 조회할 직원의 사원번호.
+  - `course_id` (integer, required): 조회할 교육 과정의 ID.
+- **성공 응답 (Success Response `200 OK`):**
+  ```json
+  {
+      "id": 1,
+      "user": 1,
+      "user_name": "홍길동",
+      "motion_type": 1,
+      "motion_name": "소화기 사용 훈련",
+      "score": 95.5,
+      "recorded_at": "2025-10-21T10:00:00Z"
+  }
+  ```
+- **실패 응답 (Error Response `404 Not Found`):**
+  - 해당 과정, 동작 유형, 또는 평가 기록을 찾을 수 없는 경우
+
 ---
 
 ## 5. AI (동작 인식 & 평가)
@@ -273,3 +295,25 @@
       }
   }
   ```
+
+### 5.4. 과정별 사용자 평가 기록 조회
+- **Endpoint:** `GET /api/ai/recordings/user/<str:emp_no>/course/<int:course_id>/
+- **설명:** 특정 사용자(`emp_no`)의 특정 교육 과정(`course_id`)에 대한 가장 최근의 AI 평가 기록을 조회합니다.
+- **인증:** JWT 인증 필요
+- **URL Parameters:**
+  - `emp_no` (string, required): 조회할 직원의 사원번호.
+  - `course_id` (integer, required): 조회할 교육 과정의 ID.
+- **성공 응답 (Success Response `200 OK`):**
+  ```json
+  {
+      "id": 1,
+      "user": 1,
+      "user_name": "홍길동",
+      "motion_type": 1,
+      "motion_name": "소화기 사용 훈련",
+      "score": 95.5,
+      "recorded_at": "2025-10-21T10:00:00Z"
+  }
+  ```
+- **실패 응답 (Error Response `404 Not Found`):**
+  - 해당 과정, 동작 유형, 또는 평가 기록을 찾을 수 없는 경우
