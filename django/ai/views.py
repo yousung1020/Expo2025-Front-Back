@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 
 # --- Models ---
 from organizations.models import Employee, Company
@@ -48,14 +49,24 @@ class UnifiedEvaluationView(APIView):
         emp_no = validated_data['empNo']
         readings = validated_data['sensorData']
 
-        company = Company.objects.get(biz_no="0123456789")
-        if not company:
-            return Response({"error": "데이터베이스에 등록된 회사가 없습니다."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        biz_no = validated_data.get('bizNo')
+        if biz_no:
+            try:
+                company = Company.objects.get(biz_no=biz_no)
+            except Company.DoesNotExist:
+                return Response({"error": f"사업자번호({biz_no})에 해당하는 회사가 존재하지 않습니다."}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            company = Company.objects.first()
+            if not company:
+                return Response({"error": "데이터베이스에 등록된 회사가 없습니다."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         employee = self._try_get_employee(emp_no, company)
 
         if not employee:
-            return Response({"detail": f"회사({company.name})에 해당 사원번호({emp_no})가 존재하지 않습니다."})
+            return Response(
+                {"detail": f"회사({company.name})에 해당 사원번호({emp_no})가 존재하지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         evaluation_result = run_evaluation(
             motion_name=motion_name,
@@ -96,13 +107,16 @@ class UserRecordingView(APIView):
         }, status=status.HTTP_200_OK)
 
 class UserCourseRecordingView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, emp_no, course_id, *args, **kwargs):
         try:
-            course = Course.objects.get(pk=course_id)
+            course = Course.objects.get(pk=course_id, company=request.user)
             motion_type = MotionType.objects.get(motion_name=course.title)
             
             user_recording = UserRecording.objects.filter(
                 user__emp_no=emp_no,
+                user__company=request.user,
                 motion_type=motion_type
             ).order_by('-recorded_at').first()
 

@@ -18,6 +18,7 @@ class EvaluationRequestSerializer(serializers.Serializer):
     motionName = serializers.CharField()
     empNo = serializers.CharField()
     sensorData = serializers.ListField(child=serializers.DictField())
+    bizNo = serializers.CharField(required=False, allow_blank=True, allow_null=True, default="")
 
 
 class UserRecordingSerializer(serializers.ModelSerializer):

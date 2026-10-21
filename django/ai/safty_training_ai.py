@@ -11,11 +11,15 @@ def preprocess_sensor_data(raw_data_dicts) -> np.ndarray:
     
     df = pd.DataFrame(raw_data_dicts)
 
+    # 데이터 개수가 window_length 최소 크기(3)보다 작으면 필터 적용이 불가능하므로 빈 배열 반환
+    if df.shape[0] < 3:
+        return np.array([])
+
     window_length = min(df.shape[0] - (df.shape[0] % 2 == 0), 11)
     if window_length < 3:
         window_length = 3
 
-    smoothed_data = df.apply(lambda col: savgol_filter(col, window_length, 3))
+    smoothed_data = df.apply(lambda col: savgol_filter(col, window_length, min(3, window_length - 1)))
 
     normalized_data = pd.DataFrame(index=smoothed_data.index, columns=smoothed_data.columns)
 
@@ -53,6 +57,9 @@ class MotionEvaluator:
 
     def evaluator_user_motion(self, user_raw_data, max_dtw_distance: float):
         preprocessed_user_data = self._preprocess_user_data(user_raw_data)
+
+        if preprocessed_user_data.size == 0:
+            return {"error": "유효한 센서 데이터가 부족하여 평가를 진행할 수 없습니다."}
 
         if not self.reference_motions_preprocessed:
             return {"error": "모범 동작 데이터가 없습니다."}

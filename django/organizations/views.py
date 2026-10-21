@@ -15,7 +15,11 @@ class UserRecordingView(APIView):
         user_recording = UserRecording.objects.filter(user__emp_no=slug).order_by('-recorded_at').first()
 
         if not user_recording:
-            return Response({"detail": "해당 사용자의 평가 기록을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({
+                "ok": False,
+                "status": False,
+                "detail": "해당 사용자의 평가 기록을 찾을 수 없습니다."
+            }, status=status.HTTP_200_OK)
 
         try:
             # 해당 평가와 연결된 Course의 수강 상태를 조회
